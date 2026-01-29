@@ -1,8 +1,8 @@
-name: CI
+name: Project Submission Pipeline
 
 on:
   pull_request:
-    branches: [main, master, develop]
+    branches: ['*/pokedex-pull-request']
 
 jobs:
   extract-pr-info:
@@ -13,7 +13,7 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          echo "📋 Extracting information from Pull Request body..."
+          echo "Extracting information from Pull Request body..."
           echo ""
           
           # Extract Full Name
@@ -41,11 +41,25 @@ jobs:
             exit 1
           fi
           
+          # Extract last name from email (second part between dots)
+          LAST_NAME=$(echo "$UMINDANAO_EMAIL" | cut -d'.' -f2)
+          
+          # Get the branch name and validate it contains the last name
+          BRANCH_NAME="${{ github.head_ref }}"
+          EXPECTED_BRANCH="${LAST_NAME}/pokedex-pull-request"
+          
+          if [ "$BRANCH_NAME" != "$EXPECTED_BRANCH" ]; then
+            echo "::error::Branch name mismatch! Expected branch: '$EXPECTED_BRANCH' but got: '$BRANCH_NAME'. Your branch should follow the format: <lastname>/pokedex-pull-request"
+            exit 1
+          fi
+          
           echo "=========================================="
-          echo "📝 Pull Request Information"
+          echo "Pull Request Information"
           echo "=========================================="
           echo "Full Name: $FULL_NAME"
           echo "Umindanao Email: $UMINDANAO_EMAIL"
+          echo "Last Name: $LAST_NAME"
+          echo "Branch Name: $BRANCH_NAME"
           echo "=========================================="
 
   gitignore-check:
@@ -68,7 +82,7 @@ jobs:
             diff .gitignore .github/expected-gitignore || true
             exit 1
           fi
-          echo "✅ .gitignore integrity check passed"
+          echo ".gitignore integrity check passed"
 
   lint:
     name: Lint
