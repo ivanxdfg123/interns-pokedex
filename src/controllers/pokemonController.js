@@ -54,7 +54,7 @@ export const getPokemonDetails = async (req, res) => {
       error: error.message
     });
   }
-};  
+};
 
 /**
  * Search results page
